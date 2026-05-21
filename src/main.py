@@ -330,16 +330,16 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
         item = item.replace(".md",".html")
         print("item",item)
         dst_path = os.path.join(dest_dir_path, item)
-        base = os.path.join(basepath,item)
+        
         if os.path.isfile(src_path):
             # It's a file: Copy it
             print(f"Copying file: {src_path} -> {dst_path}")
-            generate_page(src_path,template_path,dst_path, base)
+            generate_page(src_path,template_path,dst_path, basepath)
         
         else:
             print(f"Creating directory: {dst_path}")
             os.mkdir(dst_path)
-            generate_pages_recursive(src_path,template_path, dst_path, base)
+            generate_pages_recursive(src_path,template_path, dst_path, basepath)
 
 
 if __name__ == "__main__":
