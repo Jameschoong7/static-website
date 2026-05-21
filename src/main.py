@@ -4,7 +4,7 @@ from leafnode import LeafNode
 from parentnode import ParentNode
 from enum import Enum
 from split_node_delimiter import split_nodes_delimiter
-import re, os, shutil
+import re, os, shutil, sys
 
 
 class BlockType(Enum):
@@ -249,10 +249,13 @@ def main():
     this is code
     ```
     """
-
-    sync_static_to_public("static","public")
+    base_path="/"
+    if len(sys.argv) >1:
+        base_path = sys.argv[1]
+    
+    sync_static_to_public("static","docs")
     #generate_page("content/index.md","template.html","public/index.html")
-    generate_pages_recursive("content","template.html","public")
+    generate_pages_recursive("content","template.html","docs",base_path)
     
 
 def sync_static_to_public(src, dst):
@@ -300,7 +303,7 @@ def extract_title(markdown:str):
     raise Exception("No h1 title found")
    
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(from_path,"r") as f:
         read_md_data = f.read()
@@ -311,11 +314,14 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(read_md_data)
     read_temp_data = read_temp_data.replace("{{ Title }}",title)
     read_temp_data = read_temp_data.replace("{{ Content }}", html_content)
+    read_temp_data = read_temp_data.replace('href="/',f'href="{basepath}')
+    read_temp_data = read_temp_data.replace('src="/',f'src="{basepath}')
+
     with open(dest_path, 'w') as  f:
         f.write(read_temp_data)
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     items = os.listdir(dir_path_content)
 
     for item in items:
@@ -324,16 +330,16 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         item = item.replace(".md",".html")
         print("item",item)
         dst_path = os.path.join(dest_dir_path, item)
-
+        base = os.path.join(basepath,item)
         if os.path.isfile(src_path):
             # It's a file: Copy it
             print(f"Copying file: {src_path} -> {dst_path}")
-            generate_page(src_path,template_path,dst_path)
+            generate_page(src_path,template_path,dst_path, base)
         
         else:
             print(f"Creating directory: {dst_path}")
             os.mkdir(dst_path)
-            generate_pages_recursive(src_path,template_path, dst_path)
+            generate_pages_recursive(src_path,template_path, dst_path, base)
 
 
 if __name__ == "__main__":
